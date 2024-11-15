@@ -1,0 +1,66 @@
+# Defines three services (WP, MariaDB, and Nginx) with configs, dependencies, volumes
+# and connects them to a common network
+
+version: '3.5'
+
+#TO USE AT SCHOOL
+#/home/lsalmi/data/db
+#/home/lsalmi/data/wp
+
+
+volumes:
+  mariadb:
+    name: mariadb
+    driver_opts:
+      type: none
+      device: /home/lsalmi/data/db
+      o: bind
+  wordpress:
+    name: wordpress
+    driver_opts:
+      type: none
+      device: /home/lsalmi/data/wp
+      o: bind
+
+networks:
+  mynetwork:
+    driver: bridge
+
+services:
+  nginx:
+    container_name: nginx
+    build: ./requirements/nginx
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - mynetwork
+    env_file: .env
+    restart: always
+
+  mariadb:
+    container_name: mariadb
+    image: mariadb_image
+    build: ./requirements/mariadb
+    volumes:
+      - mariadb:/var/lib/mysql
+    networks:
+      - mynetwork
+    env_file: .env
+    restart: always
+
+  wordpress:
+    container_name: wordpress
+    image: wordpress_image
+    build: ./requirements/wordpress
+    depends_on:
+      - mariadb
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - mynetwork
+    env_file: .env
+    restart: always
